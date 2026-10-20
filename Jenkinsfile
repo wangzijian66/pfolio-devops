@@ -26,5 +26,22 @@ pipeline {
                 }
             }
         }
+
+       stage('部署到kubernetes'){
+          steps{
+            sh 'mkdir -p .tools'
+            sh 'curl -L "https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl" -o .tools/kubectl'
+            sh 'chmod +x .tools/kubectl'
+            sh '.tools/kubectl version --client'
+
+            withKubeConfig([
+              credentialsId: 'kubeconfig',
+              contextName: 'docker-desktop'
+              ]) {
+            sh '.tools/kubectl config current-context'
+            sh '.tools/kubectl get nodes'
+            }
+          }
+        }
     }
 }
