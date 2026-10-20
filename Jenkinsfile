@@ -35,7 +35,7 @@ pipeline {
             sh '.tools/kubectl version --client'
 
             withKubeConfig([
-              credentialsId: 'kubeconfig',
+              credentialsId: 'docker-desktop-kubeconfig',
               contextName: 'docker-desktop'
               ]) {
             sh '.tools/kubectl config current-context'
