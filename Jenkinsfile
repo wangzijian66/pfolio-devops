@@ -8,6 +8,8 @@ pipeline {
                 sh 'test -f assets/js/script.js'
                 sh 'test -f Dockerfile'
                 sh 'test -f .dockerignore'
+                sh 'test -f k8s/deployment.yaml'
+                sh 'test -f k8s/service.yaml'
             }
         }
 
@@ -30,7 +32,7 @@ pipeline {
        stage('部署到kubernetes'){
           steps{
             sh 'mkdir -p .tools'
-            sh 'curl -L "https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl" -o .tools/kubectl'
+            sh 'curl -fSL --retry 2 "https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl" -o .tools/kubectl'
             sh 'chmod +x .tools/kubectl'
             sh '.tools/kubectl version --client'
 
@@ -38,10 +40,18 @@ pipeline {
               credentialsId: 'docker-desktop-kubeconfig',
               contextName: 'docker-desktop'
               ]) {
-            sh '.tools/kubectl config current-context'
-            sh '.tools/kubectl get nodes'
+              sh '.tools/kubectl config current-context'
+              sh '.tools/kubectl get nodes'
+              sh '.tools/kubectl apply -f k8s/deployment.yaml'
+              sh '.tools/kubectl apply -f k8s/service.yaml'
+              sh '.tools/kubectl rollout status deployment/pfolio --timeout=120s'
             }
           }
         }
+    }
+    post {
+    always {
+        sh 'rm -f .tools/kubectl'
+      }
     }
 }
